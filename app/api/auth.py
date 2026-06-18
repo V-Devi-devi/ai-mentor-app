@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
 
 from app.schemas.auth import (
     RegisterRequest,
@@ -7,7 +6,11 @@ from app.schemas.auth import (
 )
 
 from app.core.auth import create_access_token
-from app.core.dependencies import security
+
+from app.core.dependencies import (
+    get_current_user
+)
+
 from app.core.security import (
     hash_password,
     verify_password
@@ -15,7 +18,7 @@ from app.core.security import (
 
 router = APIRouter()
 
-# Temporary storage (later replace with PostgreSQL)
+# Temporary storage
 users = []
 
 
@@ -32,7 +35,9 @@ def register(data: RegisterRequest):
     users.append(
         {
             "username": data.username,
-            "password": hash_password(data.password)
+            "password": hash_password(
+                data.password
+            )
         }
     )
 
@@ -73,12 +78,12 @@ def login(data: LoginRequest):
 
 @router.get("/profile")
 def profile(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    current_user: str = Depends(
+        get_current_user
+    )
 ):
-
-    token = credentials.credentials
 
     return {
         "message": "Authenticated User",
-        "token": token
+        "username": current_user
     }
