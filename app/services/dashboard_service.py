@@ -1,105 +1,125 @@
-def get_dashboard(
-    user,
-    onboarding,
-    roadmap,
-    tasks,
-    interviews,
-    chats
-):
+from app.models.user import User
+from app.models.task import Task
+from app.models.roadmap import Roadmap
+from app.models.interview import Interview
+from app.models.chat import Chat
 
-    # Roadmap Progress
-    total_topics = len(roadmap)
-    completed_topics = sum(
-        1 for r in roadmap
-        if r.status == "completed"
-    )
 
-    roadmap_percentage = 0
+def get_dashboard(db, user_id):
 
-    if total_topics > 0:
-        roadmap_percentage = round(
-            (completed_topics / total_topics) * 100,
-            2
-        )
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
 
-    # Tasks Progress
-    total_tasks = len(tasks)
+    total_tasks = db.query(Task).filter(
+        Task.user_id == user_id
+    ).count()
 
-    completed_tasks = sum(
-        1 for t in tasks
-        if t.status == "completed"
-    )
+    completed_tasks = db.query(Task).filter(
+        Task.user_id == user_id,
+        Task.status == "Completed"
+    ).count()
 
-    pending_tasks = (
-        total_tasks -
-        completed_tasks
-    )
+    task_progress = 0
 
-    # Interview Performance
-    total_interviews = len(interviews)
+    if total_tasks > 0:
+        task_progress = (
+            completed_tasks / total_tasks
+        ) * 100
 
-    average_score = 0
+    total_roadmaps = db.query(Roadmap).filter(
+        Roadmap.user_id == user_id
+    ).count()
 
-    if total_interviews > 0:
+    completed_roadmaps = db.query(Roadmap).filter(
+        Roadmap.user_id == user_id,
+        Roadmap.status == "Completed"
+    ).count()
 
+    roadmap_progress = 0
+
+    if total_roadmaps > 0:
+        roadmap_progress = (
+            completed_roadmaps /
+            total_roadmaps
+        ) * 100
+
+    interviews = db.query(
+        Interview
+    ).filter(
+        Interview.user_id == user_id
+    ).all()
+
+    interview_score = 0
+
+    if interviews:
         total_score = sum(
-            i.score
-            for i in interviews
+            i.score for i in interviews
         )
 
-        average_score = round(
+        interview_score = (
             total_score /
-            total_interviews,
-            2
+            len(interviews)
         )
 
-    # Chat Statistics
-    questions_asked = len(chats)
+    total_chats = db.query(Chat).filter(
+        Chat.user_id == user_id
+    ).count()
+
+    overall_performance = (
+        task_progress +
+        roadmap_progress +
+        interview_score
+    ) / 3
+
+    if overall_performance >= 80:
+        recommendation = (
+            "Excellent progress. Start advanced interview preparation."
+        )
+
+    elif overall_performance >= 60:
+        recommendation = (
+            "Good progress. Focus on completing pending tasks."
+        )
+
+    else:
+        recommendation = (
+            "Need improvement. Practice daily and complete roadmap topics."
+        )
 
     return {
-        "profile": {
-            "username":
-            user.username,
+        "username": user.username,
 
-            "target_role":
-            onboarding.target_role,
+        "total_tasks":
+            total_tasks,
 
-            "skills":
-            onboarding.skills
-        },
-
-        "roadmap_progress": {
-            "completed":
-            completed_topics,
-
-            "total":
-            total_topics,
-
-            "percentage":
-            roadmap_percentage
-        },
-
-        "tasks": {
-            "completed":
+        "completed_tasks":
             completed_tasks,
 
-            "pending":
-            pending_tasks,
+        "task_progress":
+            round(task_progress, 2),
 
-            "total":
-            total_tasks
-        },
+        "total_roadmaps":
+            total_roadmaps,
 
-        "interviews": {
-            "total":
-            total_interviews,
+        "completed_roadmaps":
+            completed_roadmaps,
 
-            "average_score":
-            average_score
-        },
+        "roadmap_progress":
+            round(roadmap_progress, 2),
 
-        "learning_activity": {
-            "questions_asked":
-            questions_asked
-        }
+        "average_interview_score":
+            round(interview_score, 2),
+
+        "total_chats":
+            total_chats,
+
+        "overall_performance":
+            round(
+                overall_performance,
+                2
+            ),
+
+        "recommendation":
+            recommendation
     }
