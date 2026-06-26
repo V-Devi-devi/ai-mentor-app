@@ -1,11 +1,34 @@
-class Roadmap:
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey
+)
 
-    def __init__(
-        self,
-        role,
-        level,
-        roadmap
-    ):
-        self.role = role
-        self.level = level
-        self.roadmap = roadmap
+from app.db.base import Base
+
+
+class Roadmap(Base):
+    __tablename__ = "roadmaps"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id")
+    )
+
+    role = Column(String)
+
+    level = Column(String)
+
+    roadmap = Column(String)
+
+    status = Column(
+        String,
+        default="pending"
+    )

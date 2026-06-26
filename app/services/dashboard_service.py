@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+
 from app.models.user import User
 from app.models.task import Task
 from app.models.roadmap import Roadmap
@@ -11,6 +13,13 @@ def get_dashboard(db, user_id):
         User.id == user_id
     ).first()
 
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    # Tasks
     total_tasks = db.query(Task).filter(
         Task.user_id == user_id
     ).count()
@@ -27,13 +36,14 @@ def get_dashboard(db, user_id):
             completed_tasks / total_tasks
         ) * 100
 
+    # Roadmaps
     total_roadmaps = db.query(Roadmap).filter(
         Roadmap.user_id == user_id
     ).count()
 
     completed_roadmaps = db.query(Roadmap).filter(
         Roadmap.user_id == user_id,
-        Roadmap.status == "Completed"
+        Roadmap.status == "completed"
     ).count()
 
     roadmap_progress = 0
@@ -44,6 +54,7 @@ def get_dashboard(db, user_id):
             total_roadmaps
         ) * 100
 
+    # Interviews
     interviews = db.query(
         Interview
     ).filter(
@@ -53,19 +64,26 @@ def get_dashboard(db, user_id):
     interview_score = 0
 
     if interviews:
-        total_score = sum(
-            i.score for i in interviews
-        )
+        scores = []
 
-        interview_score = (
-            total_score /
-            len(interviews)
-        )
+        for interview in interviews:
+            if interview.score is not None:
+                scores.append(
+                    interview.score
+                )
 
+        if len(scores) > 0:
+            interview_score = (
+                sum(scores) /
+                len(scores)
+            )
+
+    # Chats
     total_chats = db.query(Chat).filter(
         Chat.user_id == user_id
     ).count()
 
+    # Overall Performance
     overall_performance = (
         task_progress +
         roadmap_progress +
@@ -88,38 +106,35 @@ def get_dashboard(db, user_id):
         )
 
     return {
+        "id": user.id,
         "username": user.username,
+        "role": user.role,
 
-        "total_tasks":
-            total_tasks,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "task_progress": round(
+            task_progress,
+            2
+        ),
 
-        "completed_tasks":
-            completed_tasks,
+        "total_roadmaps": total_roadmaps,
+        "completed_roadmaps": completed_roadmaps,
+        "roadmap_progress": round(
+            roadmap_progress,
+            2
+        ),
 
-        "task_progress":
-            round(task_progress, 2),
+        "average_interview_score": round(
+            interview_score,
+            2
+        ),
 
-        "total_roadmaps":
-            total_roadmaps,
+        "total_chats": total_chats,
 
-        "completed_roadmaps":
-            completed_roadmaps,
+        "overall_performance": round(
+            overall_performance,
+            2
+        ),
 
-        "roadmap_progress":
-            round(roadmap_progress, 2),
-
-        "average_interview_score":
-            round(interview_score, 2),
-
-        "total_chats":
-            total_chats,
-
-        "overall_performance":
-            round(
-                overall_performance,
-                2
-            ),
-
-        "recommendation":
-            recommendation
+        "recommendation": recommendation
     }

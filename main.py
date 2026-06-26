@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from sqlalchemy import text
 
 from app.db.base import Base
 from app.db.session import engine
@@ -28,66 +29,76 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Create SQLite Tables
+# ==========================
+# DATABASE DEBUG
+# ==========================
+print("Creating tables...")
+
+with engine.connect() as conn:
+    result = conn.execute(
+        text("SELECT current_database()")
+    )
+    print(
+        "CONNECTED DATABASE:",
+        result.scalar()
+    )
+
 Base.metadata.create_all(bind=engine)
 
-# Authentication
+print("Tables created")
+
+# ==========================
+# ROUTERS
+# ==========================
+
 app.include_router(
     auth_router,
     prefix="/api/auth",
     tags=["Authentication"]
 )
 
-# Onboarding
 app.include_router(
     onboarding_router,
     prefix="/api/onboarding",
     tags=["Onboarding"]
 )
 
-# AI Chat
 app.include_router(
     chat_router,
     prefix="/api/chat",
     tags=["AI Chat"]
 )
 
-# Dashboard
 app.include_router(
     dashboard_router,
     prefix="/api/dashboard",
     tags=["Dashboard"]
 )
 
-# Roadmap
 app.include_router(
     roadmap_router,
     prefix="/api/roadmap",
     tags=["Roadmap"]
 )
 
-# Tasks
 app.include_router(
     task_router,
     prefix="/api/tasks",
     tags=["Tasks"]
 )
 
-# Interviews
 app.include_router(
     interview_router,
     prefix="/api/interviews",
     tags=["Interviews"]
 )
 
-# Analytics
 app.include_router(
     analytics_router,
     prefix="/api/analytics",
     tags=["Analytics"]
 )
 
-# Admin
 app.include_router(
     admin_router,
     prefix="/api/admin",

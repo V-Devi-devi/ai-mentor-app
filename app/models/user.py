@@ -21,5 +21,5 @@ class User(Base):
 
     role = Column(
         String,
-        default="student"
+        default="user"
     )

@@ -8,20 +8,11 @@ from app.models.chat import Chat
 def get_system_stats(db):
 
     return {
-        "total_users":
-            db.query(User).count(),
-
-        "total_tasks":
-            db.query(Task).count(),
-
-        "total_roadmaps":
-            db.query(Roadmap).count(),
-
-        "total_interviews":
-            db.query(Interview).count(),
-
-        "total_chats":
-            db.query(Chat).count()
+        "total_users": db.query(User).count(),
+        "total_tasks": db.query(Task).count(),
+        "total_roadmaps": db.query(Roadmap).count(),
+        "total_interviews": db.query(Interview).count(),
+        "total_chats": db.query(Chat).count()
     }
 
 

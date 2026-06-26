@@ -12,22 +12,22 @@ def roadmap(
     data: RoadmapRequest,
     user=Depends(
         role_required(
-            ["student", "mentor", "admin"]
+            ["user", "admin"]
         )
     )
 ):
 
-    roadmap = generate_roadmap(
+    roadmap_result = generate_roadmap(
         data.target_role,
         data.current_skills,
         data.experience_level
     )
 
     return {
-        "username": user["username"],
-        "role": user["role"],
+        "username": user.username,
+        "role": user.role,
         "target_role": data.target_role,
         "experience_level": data.experience_level,
         "current_skills": data.current_skills,
-        "roadmap": roadmap
+        "roadmap": roadmap_result
     }
